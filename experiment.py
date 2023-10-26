@@ -26,8 +26,7 @@ from . sing.params import singing_2intervals
 ########################################################################################################################
 # Global parameters
 ########################################################################################################################
-DEBUG = False
-DESIGN = "across"  # within vs across
+DESIGN = "within"  # within vs across
 SYLLABLE = 'TA'
 NUM_NOTES = 3
 NUM_INT = (NUM_NOTES - 1)
@@ -52,6 +51,7 @@ roving_mean = dict(
     high=61  # it was 61.5 (female)
     )
 
+
 # timbre: piano or complex_mid_ISI_long
 note_duration_tonejs = 0.8
 note_silence_tonejs = 0
@@ -67,31 +67,23 @@ TIMBRE = dict(
 )
 pitch_duration = note_duration_tonejs + note_silence_tonejs
 
-# conditional parameters
-if DEBUG:
-    initial_recruitment_size = 10
-    num_iterations_per_chain = 5
-    num_chains_per_participant = 5
-    num_trials_per_participant_block = 50
-    max_num_failed_trials_allowed = 2
-    target_num_participants = 30
-    num_chains = 5  # only active in within
-    repeat_same_chain = True
-    save_plot = True
-else:
-    initial_recruitment_size = 30
-    num_iterations_per_chain = 10
-    num_chains_per_participant = 4   # only active in within
-    num_trials_per_participant_block = NUM_TRIALS_PARTICIPANT
-    max_num_failed_trials_allowed = 5
-    target_num_participants = 50  # only active in within
-    num_chains = NUM_CHAINS_EXPERIMENT
-    repeat_same_chain = False
-    save_plot = False
+
+# experiment parameters
+initial_recruitment_size = 10
+num_iterations_per_chain = 5
+num_chains_per_participant = 5
+max_num_failed_trials_allowed = 2
+target_num_participants = 30
+num_chains = 3  # only active in within
+num_trials_per_participant_block = num_chains * num_iterations_per_chain
+
+repeat_same_chain = True
+save_plot = True
+
 
 if DESIGN == "within":
     DESIGN_PARAMS = {
-        "num_trials_per_participant_block": (int(num_trials_per_participant_block) + 10),
+        "num_trials_per_participant_block": int(num_trials_per_participant_block),
         "num_trials_practice_test": 3,
         "num_trials_practice_feedback": 2,
         "num_iterations_per_chain": num_iterations_per_chain,
@@ -125,7 +117,7 @@ else:
 
 # utils
 def estimate_time_per_trial(
-    # estiamte time for trials: melody and singing duration
+    # estimate time for trials: melody and singing duration
         pitch_duration,
         num_pitches,
         time_after_singing
@@ -393,49 +385,47 @@ class Exp(psynet.experiment.Experiment):
 
     timeline = Timeline(
         NoConsent(),
-        CodeBlock(lambda participant: participant.var.set("register", "low")),  # only for debugging
+        CodeBlock(lambda participant: participant.var.set("register", "low")),  # set singing register to low for debugg
         InfoPage(
-            Markup(
-                f"""Instructions"""
-            ),
+            Markup(f"""Instructions"""),
             time_estimate=5,
         ),
+        # AudioImitationChainTrialMaker(
+        #     id_="imitation_chain",
+        #     trial_class=CustomTrial,
+        #     node_class=CustomNode,
+        #     chain_type="within",
+        #     max_nodes_per_chain=10,
+        #     max_trials_per_participant=10,
+        #     expected_trials_per_participant=10,
+        #     chains_per_participant=3,
+        #     chains_per_experiment=None,
+        #     trials_per_node=1,
+        #     balance_across_chains=True,
+        #     check_performance_at_end=False,
+        #     check_performance_every_trial=False,
+        #     recruit_mode="n_participants",
+        #     target_n_participants=10,
+        #     allow_revisiting_networks_in_across_chains=True,
+        # ),
         AudioImitationChainTrialMaker(
             id_="imitation_chain",
             trial_class=CustomTrial,
             node_class=CustomNode,
-            chain_type="within",
-            max_nodes_per_chain=10,
-            max_trials_per_participant=10,
-            expected_trials_per_participant=10,
-            chains_per_participant=3,
-            chains_per_experiment=None,
-            trials_per_node=1,
-            balance_across_chains=True,
-            check_performance_at_end=False,
+            chain_type=DESIGN_PARAMS["chain_type"],
+            expected_trials_per_participant=DESIGN_PARAMS["num_trials_per_participant_block"],
+            max_nodes_per_chain=num_iterations_per_chain,  # only relevant in within chains
+            chains_per_participant=DESIGN_PARAMS["num_chains_per_participant"],  # set to None if chain_type="across"
+            chains_per_experiment=DESIGN_PARAMS["num_chains_per_exp_block"],  # set to None if chain_type="within"
+            trials_per_node=DESIGN_PARAMS["trials_per_node"],
+            balance_across_chains=DESIGN_PARAMS["balance_across_chains"],
+            check_performance_at_end=True,
             check_performance_every_trial=False,
-            recruit_mode="n_participants",
-            target_n_participants=10,
-            allow_revisiting_networks_in_across_chains=True,
+            propagate_failure=False,
+            recruit_mode=DESIGN_PARAMS["recruit_mode"],
+            target_n_participants=DESIGN_PARAMS["target_num_participants"],
+            allow_revisiting_networks_in_across_chains=DESIGN_PARAMS["repeat_same_chain"],
         ),
-        # AudioImitationChainTrialMaker(
-        #     id_="trial_maker_iterated_tapping",
-        #     trial_class=CustomTrial,
-        #     node_class=CustomNode,
-        #     chain_type=DESIGN_PARAMS["chain_type"],
-        #     expected_trials_per_participant=DESIGN_PARAMS["num_trials_per_participant_block"],
-        #     max_nodes_per_chain=num_iterations_per_chain,  # only relevant in within chains
-        #     chains_per_participant=DESIGN_PARAMS["num_chains_per_participant"],  # set to None if chain_type="across"
-        #     chains_per_experiment=DESIGN_PARAMS["num_chains_per_exp_block"],  # set to None if chain_type="within"
-        #     trials_per_node=DESIGN_PARAMS["trials_per_node"],
-        #     balance_across_chains=DESIGN_PARAMS["balance_across_chains"],
-        #     check_performance_at_end=True,
-        #     check_performance_every_trial=False,
-        #     propagate_failure=False,
-        #     recruit_mode=DESIGN_PARAMS["recruit_mode"],
-        #     target_n_participants=DESIGN_PARAMS["target_num_participants"],
-        #     allow_revisiting_networks_in_across_chains=DESIGN_PARAMS["repeat_same_chain"],
-        # ),
         SuccessfulEndPage(),
     )
 
