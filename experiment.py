@@ -71,19 +71,19 @@ pitch_duration = note_duration_tonejs + note_silence_tonejs
 # experiment parameters
 initial_recruitment_size = 10
 num_iterations_per_chain = 5
-num_chains_per_participant = 5
 max_num_failed_trials_allowed = 2
 target_num_participants = 30
-num_chains = 3  # only active in within
-num_trials_per_participant_block = num_chains * num_iterations_per_chain
+num_chains_per_participant = 3  # only active in within
+num_chains_per_experiment = 3  # only active in across
 
 repeat_same_chain = True
 save_plot = True
 
 
 if DESIGN == "within":
+    num_trials_per_participant = num_chains_per_participant * num_iterations_per_chain
     DESIGN_PARAMS = {
-        "num_trials_per_participant_block": int(num_trials_per_participant_block),
+        "num_trials_per_participant": int(num_trials_per_participant),
         "num_trials_practice_test": 3,
         "num_trials_practice_feedback": 2,
         "num_iterations_per_chain": num_iterations_per_chain,
@@ -94,12 +94,13 @@ if DESIGN == "within":
         "num_chains_per_participant": num_chains_per_participant,
         "recruit_mode": "num_participants",
         "target_num_participants": target_num_participants,
-        "num_chains_per_exp_block": None,
+        "num_chains_per_experiment": None,
         "repeat_same_chain": repeat_same_chain
     }
 else:
+    num_trials_per_participant = num_chains_per_experiment * num_iterations_per_chain
     DESIGN_PARAMS = {
-        "num_trials_per_participant_block": int(num_trials_per_participant_block),
+        "num_trials_per_participant": int(num_trials_per_participant),
         "num_trials_practice_test": 3,
         "num_trials_practice_feedback": 3,
         "num_iterations_per_chain": num_iterations_per_chain,
@@ -110,7 +111,7 @@ else:
         "num_chains_per_participant": None,
         "recruit_mode": "num_trials",
         "target_num_participants": None,
-        "num_chains_per_exp_block": num_chains,
+        "num_chains_per_experiment": num_chains_per_experiment,
         "repeat_same_chain": repeat_same_chain
     }
 
@@ -273,7 +274,7 @@ class CustomTrial(CustomTrialAnalysis):
         )
 
         current_trial = self.position + 1
-        total_num_trials = DESIGN_PARAMS["num_trials_per_participant_block"]
+        total_num_trials = DESIGN_PARAMS["num_trials_per_participant"]
         show_current_trial = f'<br><br>Trial number {current_trial} out of {total_num_trials} possible maximum trials.'
 
         pages = create_singing_trial(
@@ -390,33 +391,15 @@ class Exp(psynet.experiment.Experiment):
             Markup(f"""Instructions"""),
             time_estimate=5,
         ),
-        # AudioImitationChainTrialMaker(
-        #     id_="imitation_chain",
-        #     trial_class=CustomTrial,
-        #     node_class=CustomNode,
-        #     chain_type="within",
-        #     max_nodes_per_chain=10,
-        #     max_trials_per_participant=10,
-        #     expected_trials_per_participant=10,
-        #     chains_per_participant=3,
-        #     chains_per_experiment=None,
-        #     trials_per_node=1,
-        #     balance_across_chains=True,
-        #     check_performance_at_end=False,
-        #     check_performance_every_trial=False,
-        #     recruit_mode="n_participants",
-        #     target_n_participants=10,
-        #     allow_revisiting_networks_in_across_chains=True,
-        # ),
         AudioImitationChainTrialMaker(
             id_="imitation_chain",
             trial_class=CustomTrial,
             node_class=CustomNode,
             chain_type=DESIGN_PARAMS["chain_type"],
-            expected_trials_per_participant=DESIGN_PARAMS["num_trials_per_participant_block"],
+            expected_trials_per_participant=DESIGN_PARAMS["num_trials_per_participant"],
             max_nodes_per_chain=num_iterations_per_chain,  # only relevant in within chains
             chains_per_participant=DESIGN_PARAMS["num_chains_per_participant"],  # set to None if chain_type="across"
-            chains_per_experiment=DESIGN_PARAMS["num_chains_per_exp_block"],  # set to None if chain_type="within"
+            chains_per_experiment=DESIGN_PARAMS["num_chains_per_experiment"],  # set to None if chain_type="within"
             trials_per_node=DESIGN_PARAMS["trials_per_node"],
             balance_across_chains=DESIGN_PARAMS["balance_across_chains"],
             check_performance_at_end=True,
