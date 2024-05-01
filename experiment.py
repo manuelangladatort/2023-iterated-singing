@@ -175,6 +175,7 @@ def create_singing_trial(show_current_trial, target_pitches, time_estimate, melo
 
 
 class CustomTrialAnalysis(AudioImitationChainTrial):
+
     def analyze_recording(self, audio_file: str, output_plot: str):
         # convert to right register
         if self.participant.var.register == "high":
