@@ -359,21 +359,6 @@ class CustomNode(ImitationChainNode):
             reference_mode=reference_mode
         )
 
-    # @property
-    # def duration_range(self):
-    #     raise NotImplementedError
-
-
-# class PracticeNode(CustomNode):
-#     @property
-#     def duration_range(self):
-#         return [500, 2000]
-#
-#
-# class ExperimentNode(CustomNode):
-#     @property
-#     def duration_range(self):
-#         return [250, 2000]
 
 
 ########################################################################################################################
@@ -389,7 +374,7 @@ class Exp(psynet.experiment.Experiment):
         NoConsent(),
         CodeBlock(lambda participant: participant.var.set("register", "low")),  # set singing register to low for debugg
         InfoPage(
-            Markup(f"""Instructions"""),
+            Markup(f"""Please imitate each melody as accurately as possible"""),
             time_estimate=5,
         ),
         AudioImitationChainTrialMaker(
