@@ -5,7 +5,7 @@ from markupsafe import Markup
 # psynet
 from psynet.js_synth import JSSynth, Note, HarmonicTimbre, InstrumentTimbre
 import psynet.experiment
-from psynet.asset import DebugStorage, S3Storage  # noqa
+from psynet.asset import DebugStorage, S3Storage, LocalStorage
 from psynet.consent import NoConsent
 from psynet.modular_page import AudioPrompt, AudioRecordControl, ModularPage
 from psynet.page import InfoPage, SuccessfulEndPage
@@ -28,7 +28,7 @@ from . sing.params import singing_2intervals
 ########################################################################################################################
 DESIGN = "within"  # within vs across
 SYLLABLE = 'TA'
-NUM_NOTES = 3
+NUM_NOTES = 5
 NUM_INT = (NUM_NOTES - 1)
 
 # trials
@@ -380,10 +380,10 @@ class CustomNode(ImitationChainNode):
 # Timeline
 ########################################################################################################################
 class Exp(psynet.experiment.Experiment):
-    label = "Tapping memory demo"
+    label = "Iterated singing demo"
 
     asset_storage = DebugStorage()
-    # asset_storage = S3Storage("psynet-tests", "iterated-tapping")
+    # asset_storage = LocalStorage()
 
     timeline = Timeline(
         NoConsent(),
